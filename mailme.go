@@ -37,7 +37,7 @@ type Mailer struct {
 }
 // Mail sends a templated mail. It will try to load the template from a URL, and
 // otherwise fall back to the default
-func (m *Mailer) MailWithAlternative(to, subjectTemplate, templateURL, defaultTemplate string, plainTemplateURL, plainDefaultTemplate string, templateData map[string]interface{}) error {
+func (m *Mailer) MailWithAlternative(to, subjectTemplate string, templateURL string, defaultTemplate string, plainTemplateURL string, plainDefaultTemplate string, templateData map[string]interface{}) error {
 	if m.FuncMap == nil {
 		m.FuncMap = map[string]interface{}{}
 	}
@@ -70,9 +70,9 @@ func (m *Mailer) MailWithAlternative(to, subjectTemplate, templateURL, defaultTe
 		if err != nil {
 			return err	
 		}
-		if plainBody != "" {
+		
 		mail.AddAlternative("text/plain", plainBody)
-	}
+	
 	}
 	
 	mail.SetHeader("From", m.From)
