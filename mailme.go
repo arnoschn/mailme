@@ -35,7 +35,53 @@ type Mailer struct {
 	cache   *TemplateCache
 	Logger  logrus.FieldLogger
 }
+// Mail sends a templated mail. It will try to load the template from a URL, and
+// otherwise fall back to the default
+func (m *Mailer) MailWithAlternative(to, subjectTemplate, templateURL, defaultTemplate string, plainTemplateURL, plainDefaultTemplate string, templateData map[string]interface{}) error {
+	if m.FuncMap == nil {
+		m.FuncMap = map[string]interface{}{}
+	}
+	if m.cache == nil {
+		m.cache = &TemplateCache{
+			templates: map[string]*MailTemplate{},
+			funcMap:   m.FuncMap,
+			logger:    m.Logger,
+		}
+	}
 
+	tmp, err := template.New("Subject").Funcs(template.FuncMap(m.FuncMap)).Parse(subjectTemplate)
+	if err != nil {
+		return err
+	}
+
+	subject := &bytes.Buffer{}
+	err = tmp.Execute(subject, templateData)
+	if err != nil {
+		return err
+	}
+	body, err := m.MailBody(templateURL, defaultTemplate, templateData)
+	if err != nil {
+		return err
+	}
+	plainBody := ""
+	if ( plainTemplateURL != "" || plainDefaultTemplate != "" ) {
+	plainBody, err := m.MailBody(plainTemplateURL,plainDefaultTemplate,templateData)
+		if err != nil {
+			return err	
+		}
+	}
+	mail := gomail.NewMessage()
+	mail.SetHeader("From", m.From)
+	mail.SetHeader("To", to)
+	mail.SetHeader("Subject", subject.String())
+	mail.SetBody("text/html", body)
+	if plainBody != "" {
+		mail.AddAlternative("text/html", "<p>Hello!</p>")
+	}
+	dial := gomail.NewPlainDialer(m.Host, m.Port, m.User, m.Pass)
+	return dial.DialAndSend(mail)
+
+}
 // Mail sends a templated mail. It will try to load the template from a URL, and
 // otherwise fall back to the default
 func (m *Mailer) Mail(to, subjectTemplate, templateURL, defaultTemplate string, templateData map[string]interface{}) error {
@@ -64,13 +110,13 @@ func (m *Mailer) Mail(to, subjectTemplate, templateURL, defaultTemplate string, 
 	if err != nil {
 		return err
 	}
-
+	
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", m.From)
 	mail.SetHeader("To", to)
 	mail.SetHeader("Subject", subject.String())
 	mail.SetBody("text/html", body)
-
+	
 	dial := gomail.NewPlainDialer(m.Host, m.Port, m.User, m.Pass)
 	return dial.DialAndSend(mail)
 
