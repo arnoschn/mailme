@@ -70,7 +70,7 @@ func (m *Mailer) MailWithAlternative(to, subjectTemplate string, templateURL str
 	mail.SetHeader("From", m.From)
 	mail.SetHeader("To", to)
 	mail.SetHeader("Subject", subject.String())
-	mail.SetBody("text/html", body)
+	mail.AddAlternative("text/html", body)
 	if ( plainTemplateURL != "" ) {
 		plainBody, err := m.MailBody(plainTemplateURL,plainDefaultTemplate,templateData)
 		if err != nil {
