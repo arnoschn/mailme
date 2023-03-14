@@ -77,10 +77,12 @@ func (m *Mailer) MailWithAlternative(to, subjectTemplate string, templateURL str
 			return err	
 		}
 		
-		mail.AddAlternative("text/plain", plainBody)
-	
+		mail.SetBody("text/plain", plainBody)
+		mail.AddAlternative("text/html", body)
+	} else {
+		mail.SetBody("text/html", body)
 	}
-	mail.AddAlternative("text/html", body)
+	
 	dial := gomail.NewPlainDialer(m.Host, m.Port, m.User, m.Pass)
 	return dial.DialAndSend(mail)
 
