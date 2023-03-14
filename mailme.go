@@ -65,7 +65,13 @@ func (m *Mailer) MailWithAlternative(to, subjectTemplate string, templateURL str
 	}
 	
 	mail := gomail.NewMessage()
-	if ( plainTemplateURL != "" || plainDefaultTemplate != "" ) {
+	
+	
+	mail.SetHeader("From", m.From)
+	mail.SetHeader("To", to)
+	mail.SetHeader("Subject", subject.String())
+	mail.SetBody("text/html", body)
+	if ( plainTemplateURL != "" ) {
 		plainBody, err := m.MailBody(plainTemplateURL,plainDefaultTemplate,templateData)
 		if err != nil {
 			return err	
@@ -74,12 +80,6 @@ func (m *Mailer) MailWithAlternative(to, subjectTemplate string, templateURL str
 		mail.AddAlternative("text/plain", plainBody)
 	
 	}
-	
-	mail.SetHeader("From", m.From)
-	mail.SetHeader("To", to)
-	mail.SetHeader("Subject", subject.String())
-	mail.SetBody("text/html", body)
-	
 	dial := gomail.NewPlainDialer(m.Host, m.Port, m.User, m.Pass)
 	return dial.DialAndSend(mail)
 
